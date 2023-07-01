@@ -1,0 +1,270 @@
+<?php
+session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+include('includes/dbconnection.php');
+
+if (strlen($_SESSION['clientmsuid']) == 0) {
+    header('location:logout.php');
+    exit();
+} else {
+    $employeeId = $_SESSION['clientmsuid'];
+    $employeeName = $_SESSION['clientmsname'];
+
+    // Fetch the assigned clients for the employee and clients added by the employee
+    $sql = "SELECT tblclient.* FROM tblclient 
+            INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+            INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+            WHERE tblassignments.EmployeeID = :employeeId
+
+            UNION
+
+            SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName";
+
+    $query = $dbh->prepare($sql);
+    $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+    $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+    $query->execute();
+    $clients = $query->fetchAll(PDO::FETCH_OBJ);
+}
+
+// Update client status if form is submitted
+if (isset($_POST['update_status'])) {
+    $clientId = $_POST['client_id'];
+    $status = $_POST['status'];
+
+    // Update the client status in the database
+    $updateSql = "UPDATE tblclient SET Status=:status WHERE ID=:clientId";
+    $updateQuery = $dbh->prepare($updateSql);
+    $updateQuery->bindParam(':status', $status, PDO::PARAM_STR);
+    $updateQuery->bindParam(':clientId', $clientId, PDO::PARAM_INT);
+    $updateQuery->execute();
+
+    // Return the updated status as JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Client status updated successfully']);
+    exit();
+}
+
+// Check if a search query is submitted
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $search = $_GET['search'];
+
+    // Fetch clients based on the search query
+    $sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
+    $query = $dbh->prepare($sql);
+    $query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+    $query->execute();
+    $results = $query->fetchAll(PDO::FETCH_OBJ);
+
+    // Check if any clients are found
+    if ($query->rowCount() > 0) {
+        // Clients found, display the search results
+        $clients = $results;
+    } else {
+        // No clients found for the search query
+        $clients = [];
+    }
+}
+
+?>
+
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Client Management System || Manage Clients</title>
+
+    <script type="application/x-javascript">
+        addEventListener("load", function() {
+            setTimeout(hideURLbar, 0);
+        }, false);
+
+        function hideURLbar() {
+            window.scrollTo(0, 1);
+        }
+    </script>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel='stylesheet' type='text/css' />
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel='stylesheet' type='text/css' />
+    <!-- Graph CSS -->
+    <link href="css/font-awesome.css" rel="stylesheet">
+    <!-- jQuery -->
+    <link href='//fonts.googleapis.com/css?family=Roboto:700,500,300,100italic,100,400' rel='stylesheet'
+          type='text/css'>
+    <!-- lined-icons -->
+    <link rel="stylesheet" href="css/icon-font.min.css" type='text/css' />
+    <!-- /js -->
+    <script src="js/jquery-1.10.2.min.js"></script>
+    <!-- //js-->
+    <script>
+        $(document).ready(function() {
+            // Handle form submission
+            $('form').submit(function(event) {
+                event.preventDefault(); // Prevent page reload
+
+                var searchQuery = $('input[name="search"]').val();
+
+                // Send an AJAX request to fetch the search results
+                $.ajax({
+                    url: 'search-clients.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { search: searchQuery },
+                    success: function(response) {
+                        // Clear the existing table rows
+                        $('#client-table tbody').empty();
+
+                        // Check if any clients are found
+                        if (response.length > 0) {
+                            // Clients found, iterate through the results and create table rows
+                            $.each(response, function(index, client) {
+                                var row = '<tr>';
+                                row += '<td>' + client.ContactName + '</td>'; // Modify based on your table structure
+                                row += '<td>' + client.CompanyName + '</td>'; // Modify based on your table structure
+                                // Add more table cells as needed
+                                row += '</tr>';
+
+                                // Append the row to the table
+                                $('#client-table tbody').append(row);
+                            });
+                        } else {
+                            // No clients found for the search query
+                            var row = '<tr>';
+                            row += '<td colspan="2">No clients found.</td>';
+                            row += '</tr>';
+
+                            // Append the row to the table
+                            $('#client-table tbody').append(row);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while fetching search results.');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="page-container">
+        <!--/content-inner-->
+        <div class="left-content">
+            <div class="inner-content">
+                <!-- header-starts -->
+                <?php include_once('includes/header.php'); ?>
+                <!-- //header-ends -->
+                <!--outter-wp-->
+                <div class="outter-wp">
+                    <!--sub-heard-part-->
+                    <div class="sub-heard-part">
+                        <ol class="breadcrumb m-b-0">
+                            <li><a href="dashboard.php">Home</a></li>
+                            <li class="active">Manage Clients</li>
+                        </ol>
+                    </div>
+                    <!--//sub-heard-part-->
+                    <div class="graph-visual tables-main">
+
+                        <h3 class="inner-tittle two">Manage Clients</h3>
+                        <div class="graph">
+                        <div class="search-bar">
+                            <form method="GET" action="">
+                                <input type="text" name="search" placeholder="Search clients...">
+                                <button type="submit">Search</button>
+                            </form>
+                        </div>
+                            <div class="tables">
+                                <table class="table" border="1" id ="client-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Contact Name</th>
+                                            <th>Company Name</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $cnt = 1;
+                                        if ($query->rowCount() > 0) {
+                                            foreach ($clients as $client) {
+                                                ?>
+                                                <tr class="active">
+                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
+                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td><?php echo htmlentities($client->CompanyName); ?></td>
+                                                    <td><?php echo htmlentities($client->Email); ?></td>
+                                                    <td>
+                                                        <select name="status" onchange="updateStatus(<?php echo $client->ID; ?>, this.value)">
+                                                            <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
+                                                            <option value="In Process" <?php if ($client->Status == 'In Process') echo 'selected'; ?>>In Process</option>
+                                                            <option value="Completed" <?php if ($client->Status == 'Completed') echo 'selected'; ?>>Completed</option>
+                                                        </select>
+                                                    </td>
+                                                    <td><a href="edit-client-details.php?viewid=<?php echo $client->ID; ?>">Edit Details</a></td>
+                                                </tr>
+                                                <?php
+                                                $cnt++;
+                                            }
+                                        } else {
+                                            ?>
+                                            <tr>
+                                                <td colspan="6">No clients assigned.</td>
+                                            </tr>
+                                            <?php
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--//graph-visual-->
+                </div>
+                <!--//outer-wp-->
+                <?php include_once('includes/footer.php'); ?>
+            </div>
+        </div>
+        <!--//content-inner-->
+        <!--/sidebar-menu-->
+        <?php include_once('includes/sidebar.php'); ?>
+        <div class="clearfix"></div>
+    </div>
+
+    <script>
+    function updateStatus(ID, Status) {
+        $.ajax({
+            url: 'update-client-status.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                client_id: ID, // Change 'ID' to 'client_id'
+                status: Status
+            },
+            success: function(response) {
+                if (response.success) { // Change 'Status' to 'success'
+                    alert(response.message);
+                } else {
+                    alert('Failed to update client status.');
+                }
+            },
+            error: function() {
+                alert('An error occurred while updating client status.');
+            }
+        });
+    }
+</script>
+
+
+    <!--js -->
+    <script src="js/jquery.nicescroll.js"></script>
+    <script src="js/scripts.js"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+</body>
+</html>
