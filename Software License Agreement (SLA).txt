@@ -1,0 +1,30 @@
+Legal Documentation - Jimit Parmar
+
+TERMS OF USE AND DISTRIBUTION
+
+The project, including all its associated files, code, and documentation ("the Project"), created by Jimit Parmar, is subject to the following terms and conditions. By using or distributing the Project, you agree to abide by these terms:
+
+1. License and Usage Rights:
+   a. The Project is provided under the [choose an open-source license, e.g., MIT License, GNU General Public License] license, which grants you the right to use, modify, and distribute the Project.
+   b. However, you are expressly prohibited from using the Project, or any derivative works thereof, for any commercial or monetary purposes without obtaining prior written consent from Jimit Parmar.
+
+2. Non-Commercial Use:
+   a. The Project is intended for non-commercial use only. You may use the Project for personal, educational, or non-profit purposes.
+   b. Commercial use includes, but is not limited to, using the Project for commercial software development, selling the Project or any derivative works, or using the Project to generate revenue directly or indirectly.
+
+3. Modification and Distribution:
+   a. You may modify the Project to suit your needs, and you may distribute the modified version of the Project under the same open-source license.
+   b. If you distribute the Project or any modified version, you must include this legal documentation file and ensure that the recipients are aware of and comply with these terms.
+
+4. Intellectual Property:
+   a. Jimit Parmar retains all intellectual property rights to the Project.
+   b. You may not claim ownership of the Project or any part thereof.
+
+5. Disclaimer of Warranty:
+   a. The Project is provided "as is," without warranty of any kind, express or implied.
+   b. Jimit Parmar shall not be liable for any damages or losses arising from the use, modification, or distribution of the Project.
+
+By using or distributing the Project, you acknowledge that you have read, understood, and agree to be bound by these terms. Failure to comply with these terms may result in legal consequences.
+
+For any questions or requests regarding the use of the Project, please contact Jimit Parmar at [contact email or address].
+
