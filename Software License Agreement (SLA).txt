@@ -9,7 +9,7 @@ The project, including all its associated files, code, and documentation ("the P
    b. However, you are expressly prohibited from using the Project, or any derivative works thereof, for any commercial or monetary purposes without obtaining prior written consent from Jimit Parmar.
 
 2. Non-Commercial Use:
-   a. The Project is intended for non-commercial use only. You may use the Project for personal, educational, or non-profit purposes.
+   a. The Project is intended for non-commercial use only. You may use the Project for personal, educational.
    b. Commercial use includes, but is not limited to, using the Project for commercial software development, selling the Project or any derivative works, or using the Project to generate revenue directly or indirectly.
 
 3. Modification and Distribution:
