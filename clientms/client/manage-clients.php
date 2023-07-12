@@ -13,25 +13,46 @@ if (strlen($_SESSION['clientmsuid']) == 0) {
     $employeeId = $_SESSION['clientmsuid'];
     $employeeName = $_SESSION['clientmsname'];
 
-    // Fetch the assigned clients for the employee and clients added by the employee
-    $sql = "SELECT tblclient.* FROM tblclient 
-            INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
-            INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
-            WHERE tblassignments.EmployeeID = :employeeId
+    // Check if a search query is submitted
+    if (isset($_GET['search']) && !empty($_GET['search'])) {
+        $search = $_GET['search'];
 
-            UNION
+        // Fetch clients based on the search query and the employee ID
+        $sql = "SELECT tblclient.* FROM tblclient 
+                INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+                INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+                WHERE (tblassignments.EmployeeID = :employeeId AND (tblclient.ContactName LIKE :search OR tblclient.CompanyName LIKE :search OR tblclient.Tag LIKE :search))
 
-            SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName";
+                UNION
 
-    $query = $dbh->prepare($sql);
-    $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
-    $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
-    $query->execute();
-    $clients = $query->fetchAll(PDO::FETCH_OBJ);
+                SELECT * FROM tblclient WHERE (ClientAddedBy = :employeeName AND (tblclient.ContactName LIKE :search OR tblclient.CompanyName LIKE :search OR tblclient.Tag LIKE :search))";
+
+        $query = $dbh->prepare($sql);
+        $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+        $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+        $query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $query->execute();
+        $clients = $query->fetchAll(PDO::FETCH_OBJ);
+    } else {
+        // Fetch clients based on the original SQL query
+        $sql = "SELECT tblclient.* FROM tblclient 
+                INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+                INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+                WHERE tblassignments.EmployeeID = :employeeId
+
+                UNION
+
+                SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName";
+
+        $query = $dbh->prepare($sql);
+        $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+        $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+        $query->execute();
+        $clients = $query->fetchAll(PDO::FETCH_OBJ);
+    }
+
     $totalClients = count($clients);
     $_SESSION['totalClients'] = $totalClients;
-
-
 }
 
 // Update client status if form is submitted
@@ -51,29 +72,23 @@ if (isset($_POST['update_status'])) {
     exit();
 }
 
-// Check if a search query is submitted
-if (isset($_GET['search']) && !empty($_GET['search'])) {
-    $search = $_GET['search'];
+// Update payment status if form is submitted
+if (isset($_POST['update_payment_status'])) {
+    $clientId = $_POST['client_id'];
+    $paymentStatus = $_POST['payment_status'];
 
-    // Fetch clients based on the search query
-    $sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
-    $query = $dbh->prepare($sql);
-    $query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
-    $query->execute();
-    $results = $query->fetchAll(PDO::FETCH_OBJ);
+    // Update the payment status in the database
+    $updateSql = "UPDATE tblclient SET PaymentStatus=:paymentStatus WHERE ID=:clientId";
+    $updateQuery = $dbh->prepare($updateSql);
+    $updateQuery->bindParam(':paymentStatus', $paymentStatus, PDO::PARAM_STR);
+    $updateQuery->bindParam(':clientId', $clientId, PDO::PARAM_INT);
+    $updateQuery->execute();
 
-    // Check if any clients are found
-    if ($query->rowCount() > 0) {
-        // Clients found, display the search results
-        $clients = $results;
-    } else {
-        // No clients found for the search query
-        $clients = [];
-    }
+    // Return the updated payment status as JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Payment status updated successfully']);
+    exit();
 }
-
 ?>
-
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -121,6 +136,70 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         }
     </script>
     <script>
+        // Function to sort the table by the "Deadline" column based on closest date to today
+function sortTableByDeadline() {
+    var table, rows, switching, i, x, y, shouldSwitch;
+    table = document.getElementById("client-table");
+    switching = true;
+    
+    // Set the sort direction initially to ascending
+    var sortDirection = "asc";
+    
+    // Get the table header for "Deadline" column
+    var header = table.rows[0].cells[7]; // Update the index if the column position changes
+    
+    // Check if the "asc" class is already applied to the header
+    if (header.classList.contains("asc")) {
+        // If asc class exists, set the sort direction to descending
+        sortDirection = "desc";
+    }
+    
+    // Remove the "asc" and "desc" classes from all table headers
+    for (i = 0; i < table.rows[0].cells.length; i++) {
+        table.rows[0].cells[i].classList.remove("asc");
+        table.rows[0].cells[i].classList.remove("desc");
+    }
+    
+    // Add the appropriate sort direction class to the header
+    header.classList.add(sortDirection);
+    
+    // Perform the sorting
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        
+        // Loop through all rows except the header row
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            
+            // Get the two elements to compare, one from current row and one from the next row
+            x = new Date(rows[i].getElementsByTagName("TD")[7].innerHTML); // Update the index if the column position changes
+            y = new Date(rows[i + 1].getElementsByTagName("TD")[7].innerHTML); // Update the index if the column position changes
+            
+            // Compare the values and perform the sorting based on the sort direction
+            if (sortDirection === "asc") {
+                if (x > y) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (sortDirection === "desc") {
+                if (x < y) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        
+        if (shouldSwitch) {
+            // If a switch is needed, swap the rows and set the switching flag to true
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+        }
+    }
+}
+
+        </script>
+    <script>
         function updatePaymentStatus(ID, PaymentStatus) {
     console.log('Function called'); // Check if the function is called
     console.log('ID:', ID); // Verify the value of ID
@@ -155,6 +234,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         </script>
 </head>
 <body>
+    
     <div class="page-container">
             <!--/content-inner-->
             <div class="left-content">
@@ -179,7 +259,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                             <div class="search-bar-container">
                                 <div class="search-bar">
                                     <form method="GET" action="">
-                                        <input type="text" name="search" placeholder="Search clients...">
+                                        <input type="text" name="search" placeholder="Search clients..">
                                         <button id = "sbutton" type="submit"><i class = "lnr lnr-magnifier"></i></button>
                                     </form>
                                 </div>
@@ -188,13 +268,17 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                     <table class="table" border="1" id ="client-table">
                                         <thead>
                                             <tr>
-                                                <th style="border: 1px solid black;">#</th>
-                                                <th style="border: 1px solid black;">Contact Name</th>
-                                                <th style="border: 1px solid black;">Company Name</th>
-                                                <th style="border: 1px solid black;">Email</th>
-                                                <th style="border: 1px solid black;">Work Status</th>
+                                                <th style="border: 1px solid black;">Job</th>
+                                                <th style="border: 1px solid black;">Client</th>
+                                                <th style="border: 1px solid black;">Company</th>
+                                                <th style="border: 1px solid black;">Financial Year</th>
+                                                <th style="border: 1px solid black;">File</th>
+                                                <th style="border: 1px solid black;">Task</th>
+                                                <th style="border: 1px solid black;"> Deadline<button class="sort-btn" onclick="sortTableByDeadline()">
+        <i class="fa fa-sort"></i>
+    </button></th>
+                                                <th style="border: 1px solid black;">Status</th>
                                                 <th style="border: 1px solid black;">Payment Status</th>
-                                                <th style="border: 1px solid black;">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody style="border= 1px solid black;">
@@ -205,9 +289,13 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                     ?>
                                                     <tr class="active">
                                                         <th scope="row"><?php echo htmlentities($cnt); ?></th>
-                                                        <td><?php echo htmlentities($client->ContactName); ?></td>
-                                                        <td><?php echo htmlentities($client->CompanyName); ?></td>
-                                                        <td><?php echo htmlentities($client->Cellphnumber); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
+                                                    
                                                         <td>
                                                             <select name="status" onchange="updateStatus(<?php echo $client->ID; ?>, this.value)">
                                                                 <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
@@ -222,7 +310,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                             <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
                                                             </select>
                                                         </td>
-                                                        <td><a href="edit-client-details.php?viewid=<?php echo $client->ID; ?>">Edit Details</a></td>
+                                                        
                                                     </tr>
                                                     <?php
                                                     $cnt++;

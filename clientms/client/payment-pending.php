@@ -187,14 +187,16 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                 <div class="tables">
                                     <table class="table" border="1" id ="client-table">
                                         <thead>
-                                            <tr>
-                                                <th style="border: 1px solid black;">#</th>
-                                                <th style="border: 1px solid black;">Contact Name</th>
-                                                <th style="border: 1px solid black;">Company Name</th>
-                                                <th style="border: 1px solid black;">Email</th>
-                                                <th style="border: 1px solid black;">Work Status</th>
+                                        <tr>
+                                                <th style="border: 1px solid black;">Job</th>
+                                                <th style="border: 1px solid black;">Client</th>
+                                                <th style="border: 1px solid black;">Company</th>
+                                                <th style="border: 1px solid black;">Financial Year</th>
+                                                <th style="border: 1px solid black;">File</th>
+                                                <th style="border: 1px solid black;">Task</th>
+                                                <th style="border: 1px solid black;">Deadline</th>
+                                                <th style="border: 1px solid black;">Status</th>
                                                 <th style="border: 1px solid black;">Payment Status</th>
-                                                <th style="border: 1px solid black;">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody style="border= 1px solid black;">
@@ -204,10 +206,14 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                 foreach ($clients as $client) {
                                                     ?>
                                                     <tr class="active">
-                                                        <th scope="row"><?php echo htmlentities($cnt); ?></th>
-                                                        <td><?php echo htmlentities($client->ContactName); ?></td>
-                                                        <td><?php echo htmlentities($client->CompanyName); ?></td>
-                                                        <td><?php echo htmlentities($client->Cellphnumber); ?></td>
+                                                        <th scope="row"><?php echo htmlentities($client->ID); ?></th>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
+                                                        <td onclick="window.location.href='edit-client-details.php?viewid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
+                                                        
                                                         <td>
                                                             <select name="status" onchange="updateStatus(<?php echo $client->ID; ?>, this.value)">
                                                                 <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
@@ -222,7 +228,6 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                             <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
                                                             </select>
                                                         </td>
-                                                        <td><a href="edit-client-details.php?viewid=<?php echo $client->ID; ?>">Edit Details</a></td>
                                                     </tr>
                                                     <?php
                                                     $cnt++;

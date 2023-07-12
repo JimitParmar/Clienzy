@@ -127,7 +127,6 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
                     <!--//graph-visual-->
                 </div>
                 <!--//outer-wp-->
-                <?php include_once('includes/footer.php'); ?>
             </div>
         </div>
         <!--//content-inner-->

@@ -29,21 +29,6 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
               INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
               WHERE tblassignments.EmployeeID = :empmsuid";
 
-$clientQuery = $dbh->prepare($clientSql);
-$clientQuery->bindParam(':empmsuid', $uid, PDO::PARAM_INT);
-$clientQuery->execute();
-
-            $results = $clientQuery->fetchAll(PDO::FETCH_OBJ);
-
-            if ($clientQuery->rowCount() > 0) {
-                echo "Clients assigned or added by the employee:<br>";
-                foreach ($results as $row) {
-                    echo $row->ContactName . "<br>";
-                }
-            } else {
-                echo "No clients assigned or added by the employee.";
-            }
-
     echo '<script>alert("Employee has been added.")</script>';
     echo "<script>window.location.href ='add-employee.php'</script>";
 } else {

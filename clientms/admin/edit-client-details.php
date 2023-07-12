@@ -6,68 +6,35 @@ if (strlen($_SESSION['clientmsaid']==0)) {
   } else{
     if(isset($_POST['submit']))
   {
-	$inputDate1 = $_POST['expiry1'];
-        // Convert input date to a DateTime object
-        $dateTime = new DateTime($inputDate1);
-        // Add 2 years to the input date
-        $expiryDate1 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-
-        $inputDate2 = $_POST['expiry2'];
-		$expiryDate2 = null; // Initialize expiryDate3 as null
-
-		if (!empty($inputDate2)) {
-			// Convert input date to a DateTime object
-			$dateTime = new DateTime($inputDate2);
-			// Add 2 years to the input date
-			$expiryDate2 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-		}
-
-
-        $inputDate3 = $_POST['expiry3'];
-		$expiryDate3 = null; // Initialize expiryDate3 as null
-
-		if (!empty($inputDate3)) {
-			// Convert input date to a DateTime object
-			$dateTime = new DateTime($inputDate3);
-			// Add 2 years to the input date
-			$expiryDate3 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-		}
 $eid=$_GET['addid'];
 $clientmsaid=$_SESSION['clientmsaid'];
  $cname=$_POST['cname'];
  $comname=$_POST['comname'];
- $address=$_POST['address'];
- $cellphnumber=$_POST['cellphnumber'];
- $ophnumber=$_POST['ophnumber'];
- $email=$_POST['email'];
+ $deadline=$_POST['deadline'];
+ $Tag=$_POST['Tag'];
+ $financialyear = $_POST['financialyear'];
+ $file = $_POST['file'];
+ $budgethrs = $_POST['budgethrs'];
+ $actualhrs = $_POST['actualhrs'];
+ $expense = $_POST['expense'];
+ $remark = $_POST['remark'];
  $notes=$_POST['notes'];
- 
-$sql="update tblclient set ContactName=:cname,CompanyName=:comname,Address=:address,Cellphnumber=:cellphnumber,Otherphnumber=:ophnumber,Email=:email,Notes=:notes, expiryDate1=:expiryDate1, expiryDate2=:expiryDate2, expiryDate3=:expiryDate3 where ID=:eid";
+
+$sql="SELECT ID from tblclient";
+$sql="UPDATE tblclient SET ContactName=:cname, CompanyName=:comname, deadline=:deadline, Tag=:Tag, Notes=:notes, financialyear=:financialyear, file=:file, budgethrs=:budgethrs, actualhrs=:actualhrs, expense=:expense, remark=:remark WHERE ID=:eid";
 $query=$dbh->prepare($sql);
-//$query->bindParam(':acctid',$acctid,PDO::PARAM_STR);
 $query->bindParam(':cname',$cname,PDO::PARAM_STR);
 $query->bindParam(':comname',$comname,PDO::PARAM_STR);
-$query->bindParam(':address',$address,PDO::PARAM_STR);
-$query->bindParam(':cellphnumber',$cellphnumber,PDO::PARAM_STR);
-$query->bindParam(':ophnumber',$ophnumber,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
+$query->bindParam(':financialyear',$financialyear,PDO::PARAM_STR);
+$query->bindParam(':deadline',$deadline,PDO::PARAM_STR);
+$query->bindParam(':Tag',$Tag,PDO::PARAM_STR);
+$query->bindParam(':file', $file, PDO::PARAM_STR);
+$query->bindParam(':budgethrs', $budgethrs, PDO::PARAM_STR);
+$query->bindParam(':actualhrs', $actualhrs, PDO::PARAM_STR);
+$query->bindParam(':expense', $expense, PDO::PARAM_STR);
+$query->bindParam(':remark', $remark, PDO::PARAM_STR);
 $query->bindParam(':notes',$notes,PDO::PARAM_STR);
 $query->bindParam(':eid',$eid,PDO::PARAM_STR);
-if (!empty($inputDate1)) {
-	$query->bindParam(':expiryDate1', $expiryDate1, PDO::PARAM_STR);
-} else {
-	$query->bindValue(':expiryDate1', null, PDO::PARAM_NULL);
-}
-if (!empty($inputDate2)) {
-	$query->bindParam(':expiryDate2', $expiryDate2, PDO::PARAM_STR);
-} else {
-	$query->bindValue(':expiryDate2', null, PDO::PARAM_NULL);
-}
-if (!empty($inputDate3)) {
-	$query->bindParam(':expiryDate3', $expiryDate3, PDO::PARAM_STR);
-} else {
-	$query->bindValue(':expiryDate3', null, PDO::PARAM_NULL);
-}
 $query->execute();
 echo '<script>alert("Client detail has been updated")</script>';
 echo "<script type='text/javascript'> document.location ='manage-client.php'; </script>";
@@ -97,6 +64,11 @@ echo "<script type='text/javascript'> document.location ='manage-client.php'; </
 	<!--skycons-icons-->
 	<script src="js/skycons.js"></script>
 	<!--//skycons-icons-->
+	<script>
+	function convertToUppercase(input) {
+        input.value = input.value.toUpperCase();
+    }
+	</script>
 </head> 
 <body>
 <div class="page-container">
@@ -139,35 +111,29 @@ foreach($results as $row)
 	</select> </div>
 	<div class="form-group"> <label for="exampleInputEmail1">Contact Name</label> <input type="text" name="cname" value="<?php  echo $row->ContactName;?>" class="form-control" required='true'> </div>
 	<div class="form-group"> <label for="exampleInputEmail1">Company Name</label> <input type="text" name="comname" value="<?php  echo $row->CompanyName;?>" class="form-control" required='true'> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Address</label> <textarea type="text" name="address"  class="form-control" required='true' rows="4" cols="3"><?php  echo $row->Address;?></textarea> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Cell Phone Number</label><input type="text" name="cellphnumber" value="<?php  echo $row->Cellphnumber;?>" class="form-control" maxlength='10' pattern="[0-9]+"> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Other Phone Number</label><input type="text" name="ophnumber" value="<?php  echo $row->Otherphnumber;?>" class="form-control" maxlength='10' pattern="[0-9]+"> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Email Address</label> <input type="email" name="email" value="<?php  echo $row->Email;?>" class="form-control" required='true'> </div> 
-	<div class="form-group"> <label for="exampleInputEmail1">Notes</label> <textarea type="text" name="notes" class="form-control" required='true' rows="4" cols="3"><?php  echo $row->Notes;?></textarea> </div>
+	<div class="form-group"> <label for="exampleInputEmail1">Deadline</label> <input type="date" name="deadline" value="<?php  echo $row->deadline;?>" class="form-control" required='true'> </div> 
+	<div>
+	<label for="exampleInputEmail1">Work Description</label>
+    <input type="text" name="Tag" value="<?php  echo $row->Tag;?>" placeholder="Work Description" class="form-control" required="true" onkeyup="convertToUppercase(this)">
+	</div>
+	<div class="form-group"> <label for="exampleInputEmail1">Financial Year</label> <input type="text" name="financialyear" value="<?php  echo $row->financialyear;?>" placeholder="Financial Year" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">File No.</label> <input type="text" name="file" value="<?php  echo $row->file;?>" placeholder="File Number" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Budget Hours</label> <input type="text" name="budgethrs" value="<?php  echo $row->budgethrs;?>" placeholder="Budget hours" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Actual Hours</label> <input type="text" name="actualhrs" value="<?php  echo $row->actualhrs;?>" placeholder="Actual hours" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Expense</label> <input type="text" name="expense" value="<?php  echo $row->expense;?>" placeholder="Total Expense" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Remark</label> <textarea type="text" name="remark" placeholder="Remark" value="<?php  echo $row->remark;?>" class="form-control"  rows="3" cols="3"></textarea> </div>
+	<div class="form-group"> <label for="exampleInputEmail1">Notes</label> <textarea type="text" name="notes" class="form-control" rows="4" cols="3"><?php  echo $row->Notes;?></textarea> </div>
+	
+	
 	<div class="form-group"> <label for="exampleInputPassword1">Creation Date</label> <input type="text" name="" value="<?php  echo $row->CreationDate;?>" required='true' class="form-control" readonly='true'> </div>
-	<div class="form-group">
-        </div>
-        <div class="form-group">
-            <label for="creation_date">Expiry Date(IceGate):</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry1" value="<?php  echo $row->expiryDate1;?>">
-        </div>
-        <div class="form-group">
-            <label for="expiry_date">Expiry Date(DGFT)</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry2" value="<?php  echo $row->expiryDate2;?>">
-        </div>
-		<div class="form-group">
-            <label for="expiry_date">Expiry Date(Class3)</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry3" value="<?php  echo $row->expiryDate3;?>">
-        </div>
 	<?php $cnt=$cnt+1;}} ?>
-	 <button type="submit" class="btn btn-default" name="submit" id="submit">Update</button><input type="button" class="btn btn-default" value="Back" onClick="history.back();return true;"style="border-radius:15px ;background-color:#282828;color:#fff;"> </form> 
+	 <button type="submit" class="btn btn-default" name="submit" id="submit">Update</button><button type="submit" class="btn btn-default" name="submit" id="submit"><a href="assign-employees.php?addid=<?php echo $row->ID; ?>">Assign </a></button></form> 
 </div>
 </div>
 </div> 
 </div>
 
 </div>
-</div>		
 <?php include_once('includes/sidebar.php');?>
 <div class="clearfix"></div>		
 </div>

@@ -6,44 +6,20 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
     header('location:logout.php');
 } else {
     if (isset($_POST['submit'])) {
-        $inputDate1 = $_POST['expiry1'];
-        // Convert input date to a DateTime object
-        $dateTime = new DateTime($inputDate1);
-        // Add 2 years to the input date
-        $expiryDate1 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-
-        $inputDate2 = $_POST['expiry2'];
-		$expiryDate2 = null; // Initialize expiryDate3 as null
-
-		if (!empty($inputDate2)) {
-			// Convert input date to a DateTime object
-			$dateTime = new DateTime($inputDate2);
-			// Add 2 years to the input date
-			$expiryDate2 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-		}
-
-
-        $inputDate3 = $_POST['expiry3'];
-		$expiryDate3 = null; // Initialize expiryDate3 as null
-
-		if (!empty($inputDate3)) {
-			// Convert input date to a DateTime object
-			$dateTime = new DateTime($inputDate3);
-			// Add 2 years to the input date
-			$expiryDate3 = $dateTime->add(new DateInterval('P2Y'))->format('Y-m-d');
-		}
-
-
         $clientmsaid = $_SESSION['clientmsaid'];
         $cname = $_POST['cname'];
         $comname = $_POST['comname'];
-        $address = $_POST['address'];
-        $cellphnumber = $_POST['cellphnumber'];
-        $ophnumber = $_POST['ophnumber'];
-        $email = $_POST['email'];
+        $deadline = $_POST['deadline'];
+        $Tag = $_POST['Tag'];
         $notes = $_POST['notes'];
+        $financialyear = $_POST['financialyear'];
+        $file = $_POST['file'];
+        $budgethrs = $_POST['budgethrs'];
+        $actualhrs = $_POST['actualhrs'];
+        $expense = $_POST['expense'];
+        $remark = $_POST['remark'];
 
-		$adminID = $_SESSION['clientmsaid'];
+        $adminID = $_SESSION['clientmsaid'];
         $sql = "SELECT AdminName FROM tbladmin WHERE ID = :adminID";
         $query = $dbh->prepare($sql);
         $query->bindParam(':adminID', $adminID, PDO::PARAM_INT);
@@ -51,46 +27,36 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
         $row = $query->fetch(PDO::FETCH_ASSOC);
         $adminName = $row['AdminName'];
 
-        $sql = "INSERT INTO tblclient (ContactName, CompanyName, Address, Cellphnumber, Otherphnumber, Email, Notes,ClientAddedBy, expiryDate1, expiryDate2, expiryDate3)
-                VALUES (:cname, :comname, :address, :cellphnumber, :ophnumber, :email, :notes,:adminName, :expiryDate1, :expiryDate2, :expiryDate3)";
+        $sql = "INSERT INTO tblclient (ContactName, CompanyName, deadline, Tag, Notes, ClientAddedBy, financialyear, file, budgethrs, actualhrs, expense, remark)
+        VALUES (:cname, :comname, :deadline, :Tag, :notes, :adminName, :financialyear, :file, :budgethrs, :actualhrs, :expense, :remark)";
 
         $query = $dbh->prepare($sql);
         $query->bindParam(':cname', $cname, PDO::PARAM_STR);
         $query->bindParam(':comname', $comname, PDO::PARAM_STR);
-        $query->bindParam(':address', $address, PDO::PARAM_STR);
-        $query->bindParam(':cellphnumber', $cellphnumber, PDO::PARAM_STR);
-        $query->bindParam(':ophnumber', $ophnumber, PDO::PARAM_STR);
-        $query->bindParam(':email', $email, PDO::PARAM_STR);
+        $query->bindParam(':deadline', $deadline, PDO::PARAM_STR);
+        $query->bindParam(':Tag', $Tag, PDO::PARAM_STR);
         $query->bindParam(':notes', $notes, PDO::PARAM_STR);
+        $query->bindParam(':adminName', $adminName, PDO::PARAM_STR);
+        $query->bindParam(':financialyear', $financialyear, PDO::PARAM_STR);
+        $query->bindParam(':file', $file, PDO::PARAM_STR);
+        $query->bindParam(':budgethrs', $budgethrs, PDO::PARAM_STR);
+        $query->bindParam(':actualhrs', $actualhrs, PDO::PARAM_STR);
+        $query->bindParam(':expense', $expense, PDO::PARAM_STR);
+        $query->bindParam(':remark', $remark, PDO::PARAM_STR);
 
-		$query->bindParam(':adminName', $adminName, PDO::PARAM_STR);
-        if (!empty($inputDate1)) {
-			$query->bindParam(':expiryDate1', $expiryDate1, PDO::PARAM_STR);
-		} else {
-			$query->bindValue(':expiryDate1', null, PDO::PARAM_NULL);
-		}
-        if (!empty($inputDate2)) {
-			$query->bindParam(':expiryDate2', $expiryDate2, PDO::PARAM_STR);
-		} else {
-			$query->bindValue(':expiryDate2', null, PDO::PARAM_NULL);
-		}
-        if (!empty($inputDate3)) {
-			$query->bindParam(':expiryDate3', $expiryDate3, PDO::PARAM_STR);
-		} else {
-			$query->bindValue(':expiryDate3', null, PDO::PARAM_NULL);
-		}
         $query->execute();
 
         $LastInsertId = $dbh->lastInsertId();
-        if ($LastInsertId > 0) {
-            echo '<script>alert("Client has been added.")</script>';
-            echo "<script>window.location.href ='add-client.php'</script>";
-        } else {
-            echo '<script>alert("Something Went Wrong. Please try again")</script>';
-        }
+	if ($lastInsertedClientId > 0) {
+        echo '<script>alert("Client has been added.")</script>';
+        echo "<script>window.location.href ='add-client.php'</script>";
+    } else {
+        echo '<script>alert("Something Went Wrong. Please try again")</script>';
     }
 }
+}
 ?>
+
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -115,6 +81,11 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
 	<!--skycons-icons-->
 	<script src="js/skycons.js"></script>
 	<!--//skycons-icons-->
+	<script>
+    function convertToUppercase(input) {
+        input.value = input.value.toUpperCase();
+    }
+	</script>
 
 </head> 
 <body>
@@ -143,58 +114,53 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
 									
 		
 	</select> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Contact Name</label> <input type="text" name="cname" placeholder="Contact Name" value="" class="form-control" required='true'> </div>
+	<div class="form-group"> <label for="exampleInputEmail1">Client Name</label> <input type="text" name="cname" placeholder="Client Name" value="" class="form-control" required='true'> </div>
 	<div class="form-group"> <label for="exampleInputEmail1">Company Name</label> <input type="text" name="comname" placeholder="Company Name" value="" class="form-control" required='true'> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Address</label> <textarea type="text" name="address" placeholder="Address" value="" class="form-control" required='true' rows="4" cols="3"></textarea> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Cell Phone Number</label><input type="text" name="cellphnumber" value="" placeholder="Cell Phone Number"  class="form-control" maxlength='10' pattern="[0-9]+"> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Other Phone Number</label><input type="text" name="ophnumber" value="" placeholder="Work Phone Number"  class="form-control" maxlength='10' pattern="[0-9]+"> </div>
-	<div class="form-group"> <label for="exampleInputEmail1">Email Address</label> <input type="email" name="email" value="" placeholder="Email address" class="form-control" required='true'> </div> 
-	<div class="form-group"> <label for="exampleInputEmail1">Notes</label> <textarea type="text" name="notes" placeholder="Notes" value="" class="form-control" required='false' rows="4" cols="3"></textarea> </div>
 	<div class="form-group">
-        </div>
-        <div class="form-group">
-            <label for="creation_date">Creation Date(IceGate):</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry1">
-        </div>
-        <div class="form-group">
-            <label for="expiry_date">Creation Date(DGFT)</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry2">
-        </div>
-		<div class="form-group">
-            <label for="expiry_date">Creation Date(Class3)</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry3">
-        </div>
+    <label for="exampleInputEmail1">Work Description</label>
+    <input type="text" name="Tag" value="" placeholder="Work Description" class="form-control" required="true" onkeyup="convertToUppercase(this)">
+	</div>
+	<div class="form-group"> <label for="exampleInputEmail1">Deadline</label> <input type="date" name="deadline" value="" placeholder="Deadline" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Financial Year</label> <input type="text" name="financialyear" value="" placeholder="Financial Year" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">File No.</label> <input type="text" name="file" value="" placeholder="File Number" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Budget Hours</label> <input type="text" name="budgethrs" value="" placeholder="Budget hours" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Actual Hours</label> <input type="text" name="actualhrs" value="" placeholder="Actual hours" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Expense</label> <input type="text" name="expense" value="" placeholder="Total Expense" class="form-control" required='true'> </div> 
+	<div class="form-group"> <label for="exampleInputEmail1">Remark</label> <textarea type="text" name="remark" placeholder="Remark" value="" class="form-control"  rows="3" cols="3"></textarea> </div>
 	
+	
+	<div class="form-group"> <label for="exampleInputEmail1">Notes</label> <textarea type="text" name="notes" placeholder="Notes" value="" class="form-control"  rows="4" cols="3"></textarea> </div>
+	<div class="form-group">
+        </div>	
 	 <button type="submit" class="btn btn-default" name="submit" id="submit">Add</button> </form> 
 </div>
 </div>
 </div> 
 </div>
 </div>
-</div>		
+	
 <?php include_once('includes/sidebar.php');?>
 <div class="clearfix"></div>		
 </div>
 <script>
-		var toggle = true;
-
-		$(".sidebar-icon").click(function() {                
-			if (toggle)
-			{
-				$(".page-container").addClass("sidebar-collapsed").removeClass("sidebar-collapsed-back");
-				$("#menu span").css({"position":"absolute"});
-			}
-			else
-			{
-				$(".page-container").removeClass("sidebar-collapsed").addClass("sidebar-collapsed-back");
-				setTimeout(function() {
-					$("#menu span").css({"position":"relative"});
-				}, 400);
-			}
-
-			toggle = !toggle;
-		});
-	</script>
+        var toggle = true;
+        $(".sidebar-icon").click(function() {
+            if (toggle) {
+                $(".page-container").addClass("sidebar-collapsed").removeClass("sidebar-collapsed-back");
+                $("#menu span").css({
+                    "position": "absolute"
+                });
+            } else {
+                $(".page-container").removeClass("sidebar-collapsed").addClass("sidebar-collapsed-back");
+                setTimeout(function() {
+                    $("#menu span").css({
+                        "position": "relative"
+                    });
+                }, 400);
+            }
+            toggle = !toggle;
+        });
+    </script>
 	<!--js -->
 	<script src="js/jquery.nicescroll.js"></script>
 	<script src="js/scripts.js"></script>

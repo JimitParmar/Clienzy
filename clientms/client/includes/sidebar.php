@@ -36,8 +36,9 @@ foreach($results as $client)
     <div class="menu">
         <ul id="menu" >
             <li><a href="dashboard.php"><i class="fa fa-tachometer"></i> <span>Dashboard</span></a></li>
-            <li><a href="manage-clients.php"><i class="fa fa-user"></i> <span>Manage Clients</span></a></li>
             <li><a href="add-client.php"><i class="fa fa-user"></i> <span>Add Client</span></a></li>
+            <li><a href="manage-clients.php"><i class="fa fa-user"></i> <span>Manage Clients</span></a></li>
+            <li><a href="manage-dsc.php"><i class="fa fa-tachometer"></i> <span>Manage DSC</span></a></li>
          
         </ul>
     </div>

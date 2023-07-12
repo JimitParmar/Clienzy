@@ -20,49 +20,20 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
         $result = $query->fetch(PDO::FETCH_ASSOC);
         if ($result) {
             return htmlentities($result['EmployeeName']);
-        } else {
-            // Fetch the client added by name if not assigned to any employee
-            $addedBySql = "SELECT ClientAddedBy FROM tblclient WHERE ID = :clientId";
-            $addedByQuery = $dbh->prepare($addedBySql);
-            $addedByQuery->bindParam(':clientId', $clientId, PDO::PARAM_INT);
-            $addedByQuery->execute();
-
-            $addedByResult = $addedByQuery->fetch(PDO::FETCH_ASSOC);
-            if ($addedByResult) {
-                return htmlentities($addedByResult['ClientAddedBy']);
-            } else {
-                return "No employee assigned";
-            }
         }
-    }
-    $sql = "SELECT * FROM tblclient WHERE PaymentStatus = 'Pending'";
-		$query = $dbh->prepare($sql);
-		$query->execute();
-		$clients = $query->fetchAll(PDO::FETCH_OBJ);
-	if (isset($_GET['search']) && !empty($_GET['search'])) {
-		$search = $_GET['search'];
-	
-		// Fetch clients based on the search query
-		$sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
-		$query = $dbh->prepare($sql);
-		$query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
-		$query->execute();
-		$results = $query->fetchAll(PDO::FETCH_OBJ);
-	
-		if ($query->rowCount() > 0) {
-			// Clients found, display the search results
-			$clients = $results;
+        } 
+            // Fetch the client added by name if not assigned to any employee
+            $today = date('Y-m-d');
+$sql = "SELECT ID, ContactName, CompanyName, deadline,financialyear,Tag,file, Status, PaymentStatus, ClientAddedBy
+        FROM tblclient
+        WHERE deadline <= :today";
 
-		} else {
-			// No clients found for the search query
-			$clients = [];
-		}
-	} else {
-		// Fetch all clients
-		
-	}
-	
-}
+$query = $dbh->prepare($sql);
+$query->bindParam(':today', $today, PDO::PARAM_STR);
+$query->execute();
+
+$clients = $query->fetchAll(PDO::FETCH_OBJ);
+            }
 ?>
 
 <!DOCTYPE HTML>
@@ -149,14 +120,14 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
                             <li><a href="dashboard.php">Home</a></li>
-                            <li class="active">Pending Clients</li>
+                            <li class="active">Deadline Passed</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Payment Pending</h3>
+                        <h3 class="inner-tittle two">Deadline Passed</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">

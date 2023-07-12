@@ -35,7 +35,10 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
             }
         }
     }
-    $sql = "SELECT * FROM tblclient WHERE PaymentStatus = 'Pending'";
+    $sql = "SELECT c.ID, c.ContactName, c.expiryDate1,c.expiryDate2,c.expiryDate3 
+				FROM tblclient c
+				LEFT JOIN tblclient_employee ce ON c.ClientAddedBy = ce.EmployeeID
+				LEFT JOIN tblemployee e ON ce.EmployeeID = e.EmployeeID";
 		$query = $dbh->prepare($sql);
 		$query->execute();
 		$clients = $query->fetchAll(PDO::FETCH_OBJ);
@@ -149,14 +152,14 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
                             <li><a href="dashboard.php">Home</a></li>
-                            <li class="active">Pending Clients</li>
+                            <li class="active">Manage DSC</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Payment Pending</h3>
+                        <h3 class="inner-tittle two">Manage DSC</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">
@@ -169,17 +172,13 @@ function updatePaymentStatus(ID, PaymentStatus) {
                             <div class="tables">
                                 <table class="table" border="1" id="client-table">
                                     <thead>
-                                    <tr>
-                                            <th>Job</th>
-                                            <th >Client </th>
-                                            <th>Company</th>
-                                            <th>Financial Year</th>
-                                            <th>File</th>
-                                            <th>Task</th>
-                                            <th>Assigned</th>
-                                            <th>Deadline</th>
-                                            <th>Status</th>
-                                            <th>Payment Status</th>
+                                        <tr>
+                                            <th>#</th>
+                                            <th style="width: 10%;">Client </th>
+                                            <th>IceGate</th>
+                                            <th>DGFT</th>
+                                            <th>Class3</th>
+                                            <th>Setting</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -189,28 +188,13 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                             foreach ($clients as $client) {
                                         ?>
                                                 <tr class="active">
-                                                    <td><?php echo htmlentities($client->ID); ?></th>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo getAssignedEmployeeName($client->ID); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
-                                                    
+                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
+                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate1); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate2); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate3); ?></td>
                                                     <td>
-                                                        <select name="status" onchange="updateStatus('<?php echo $client->ID; ?>', this.value)">
-                                                            <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
-                                                            <option value="In Process" <?php if ($client->Status == 'In Process') echo 'selected'; ?>>In Process</option>
-                                                            <option value="Completed" <?php if ($client->Status == 'Completed') echo 'selected'; ?>>Completed</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                    <select name="payment_status" onchange="updatePaymentStatus('<?php echo $client->ID; ?>', this.value)">
-                                                        <option value="Pending" <?php if ($client->PaymentStatus == 'Pending') echo 'selected'; ?>>Pending</option>
-                                                        <option value="Paid" <?php if ($client->PaymentStatus == 'Paid') echo 'selected'; ?>>Paid</option>
-                                                        <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
-                                                    </select>
+                                                        <a href="edit-dsc-details.php?addid=<?php echo $client->ID; ?>">Edit</a>
                                                     </td>
                                                 </tr>
                                         <?php

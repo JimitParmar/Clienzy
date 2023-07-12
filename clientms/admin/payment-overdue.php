@@ -5,6 +5,36 @@ include('includes/dbconnection.php');
 if (strlen($_SESSION['clientmsaid']) == 0) {
     header('location:logout.php');
 } else {
+    function getAssignedEmployeeName($clientId){
+        global $dbh;
+
+        $sql = "SELECT e.EmployeeName
+                FROM tblassignments a
+                JOIN tblemployee e ON a.EmployeeID = e.EmployeeID
+                WHERE a.ID = :clientId";
+
+        $query = $dbh->prepare($sql);
+        $query->bindParam(':clientId', $clientId, PDO::PARAM_INT);
+        $query->execute();
+
+        $result = $query->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            return htmlentities($result['EmployeeName']);
+        } else {
+            // Fetch the client added by name if not assigned to any employee
+            $addedBySql = "SELECT ClientAddedBy FROM tblclient WHERE ID = :clientId";
+            $addedByQuery = $dbh->prepare($addedBySql);
+            $addedByQuery->bindParam(':clientId', $clientId, PDO::PARAM_INT);
+            $addedByQuery->execute();
+
+            $addedByResult = $addedByQuery->fetch(PDO::FETCH_ASSOC);
+            if ($addedByResult) {
+                return htmlentities($addedByResult['ClientAddedBy']);
+            } else {
+                return "No employee assigned";
+            }
+        }
+    }
     $sql = "SELECT * FROM tblclient WHERE PaymentStatus = 'Overdue'";
 		$query = $dbh->prepare($sql);
 		$query->execute();
@@ -38,7 +68,7 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Manage Clients</title>
+    <title>Client Management System || Manage Client</title>
     <link href="css/bootstrap.min.css" rel='stylesheet' type='text/css' />
     <link href="css/style.css" rel='stylesheet' type='text/css' />
     <link href="css/font-awesome.css" rel="stylesheet"> 
@@ -118,15 +148,15 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <!--sub-heard-part-->
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
-                            <li><a href="dashboard.php">Dashboard</a></li>
-                            <li class="active">Payment Overdue</li>
+                            <li><a href="dashboard.php">Home</a></li>
+                            <li class="active">Overdue Clients</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Payment Overdue</h3>
+                        <h3 class="inner-tittle two">Overdue Clients</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">
@@ -139,16 +169,17 @@ function updatePaymentStatus(ID, PaymentStatus) {
                             <div class="tables">
                                 <table class="table" border="1" id="client-table">
                                     <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Contact Name</th>
-                                            <th>Company Name</th>
-                                            <th>Phone Number</th>
+                                    <tr>
+                                            <th>Job</th>
+                                            <th >Client </th>
+                                            <th>Company</th>
+                                            <th>Financial Year</th>
+                                            <th>File</th>
+                                            <th>Task</th>
+                                            <th>Assigned</th>
+                                            <th>Deadline</th>
                                             <th>Status</th>
                                             <th>Payment Status</th>
-                                            <th>Added by</th>
-                                            <th>Assigned to</th>
-                                            <th>Setting</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -158,10 +189,15 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                             foreach ($clients as $client) {
                                         ?>
                                                 <tr class="active">
-                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
-                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
-                                                    <td><?php echo htmlentities($client->CompanyName); ?></td>
-                                                    <td><?php echo htmlentities($client->Cellphnumber); ?></td>
+                                                    <td><?php echo htmlentities($client->ID); ?></th>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo getAssignedEmployeeName($client->ID); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
+                                                    
                                                     <td>
                                                         <select name="status" onchange="updateStatus('<?php echo $client->ID; ?>', this.value)">
                                                             <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
@@ -175,45 +211,6 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                                         <option value="Paid" <?php if ($client->PaymentStatus == 'Paid') echo 'selected'; ?>>Paid</option>
                                                         <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
                                                     </select>
-                                                    </td>
-
-                                                    <td><?php echo htmlentities($client->ClientAddedBy); ?></td>
-                                                    <?php
-                                                    function getAssignedEmployeeName($clientId){
-                                                        global $dbh;
-                                                
-                                                        $sql = "SELECT e.EmployeeName
-                                                                FROM tblassignments a
-                                                                JOIN tblemployee e ON a.EmployeeID = e.EmployeeID
-                                                                WHERE a.ID = :clientId";
-                                                
-                                                        $query = $dbh->prepare($sql);
-                                                        $query->bindParam(':clientId', $clientId, PDO::PARAM_INT);
-                                                        $query->execute();
-                                                
-                                                        $result = $query->fetch(PDO::FETCH_ASSOC);
-                                                        if ($result) {
-                                                            return htmlentities($result['EmployeeName']);
-                                                        } else {
-                                                            // Fetch the client added by name if not assigned to any employee
-                                                            $addedBySql = "SELECT ClientAddedBy FROM tblclient WHERE ID = :clientId";
-                                                            $addedByQuery = $dbh->prepare($addedBySql);
-                                                            $addedByQuery->bindParam(':clientId', $clientId, PDO::PARAM_INT);
-                                                            $addedByQuery->execute();
-                                                
-                                                            $addedByResult = $addedByQuery->fetch(PDO::FETCH_ASSOC);
-                                                            if ($addedByResult) {
-                                                                return htmlentities($addedByResult['ClientAddedBy']);
-                                                            } else {
-                                                                return "No employee assigned";
-                                                            }
-                                                        }
-                                                    }
-                                                    ?>
-                                                    <td><?php echo getAssignedEmployeeName($client->ID); ?></td>
-                                                    <td>
-                                                        <a href="edit-client-details.php?addid=<?php echo $client->ID; ?>">Edit</a> ||
-                                                        <a href="assign-employees.php?addid=<?php echo $client->ID; ?>">Assign </a>
                                                     </td>
                                                 </tr>
                                         <?php

@@ -34,6 +34,7 @@ foreach($results as $row)
             <li><a href="dashboard.php"><i class="fa fa-tachometer"></i> <span>Dashboard</span></a></li>
             <li><a href="add-client.php"><i class="fa fa-user"></i> <span>Add Clients</span></a></li>
             <li><a href="manage-client.php"><i class="fa fa-table"></i> <span>Manage Clients</span></a></li>
+            <li><a href="manage-dsc.php"><i class="fa fa-tachometer"></i> <span>Manage DSC</span></a></li>
             <li><a href="add-employee.php"><i class="fa fa-user"></i> <span>Add Employee</span></a></li>
             <li><a href="manage-employee.php"><i class="fa fa-file-text-o"></i> <span>Manage Employee</span></a></li>
             

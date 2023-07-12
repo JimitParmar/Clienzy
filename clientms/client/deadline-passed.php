@@ -14,18 +14,20 @@ if (strlen($_SESSION['clientmsuid']) == 0) {
     $employeeName = $_SESSION['clientmsname'];
 
     // Fetch the assigned clients for the employee and clients added by the employee
+    $today = date('Y-m-d');
     $sql = "SELECT tblclient.* FROM tblclient 
     INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
     INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
-    WHERE tblassignments.EmployeeID = :employeeId AND tblclient.Status = 'Not Started'
+    WHERE tblassignments.EmployeeID = :employeeId AND tblclient.deadline <:today
 
     UNION
 
-    SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName AND Status = 'Not Started'";
+    SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName AND deadline <:today";
 
     $query = $dbh->prepare($sql);
     $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
     $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+    $query->bindParam(':today', $today, PDO::PARAM_STR);
     $query->execute();
     $clients = $query->fetchAll(PDO::FETCH_OBJ);
     $totalClients = count($clients);
@@ -168,13 +170,13 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                         <div class="sub-heard-part">
                             <ol class="breadcrumb m-b-0">
                                 <li><a href="dashboard.php">Dashboard</a></li>
-                                <li class="active">Pending Work</li>
+                                <li class="active">Deadline Passed</li>
                             </ol>
                         </div>
                         <!--//sub-heard-part-->
                         <div class="graph-visual tables-main">
 
-                            <h3 class="inner-tittle two">Pending Work</h3>
+                            <h3 class="inner-tittle two">Deadline Passed</h3>
                             <div class="graph">
                             <div class="search-bar-container">
                                 <div class="search-bar">

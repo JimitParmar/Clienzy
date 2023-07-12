@@ -147,6 +147,25 @@ $queryPending->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
 $queryPending->execute();
 $pendingClients = $queryPending->fetchColumn();
 
+//Fetch the number of clients with Deadline passed:
+$today = date('Y-m-d');
+$sqlPassed = "SELECT COUNT(*) AS passedCount FROM (
+    SELECT tblclient.* FROM tblclient 
+    INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+    INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+    WHERE tblassignments.EmployeeID = :employeeId AND tblclient.deadline < :today
+
+    UNION
+
+    SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName AND deadline < :today
+) AS passedClients";
+
+$queryPassed = $dbh->prepare($sqlPassed);
+$queryPassed->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+$queryPassed->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+$queryPassed->bindParam(':today', $today, PDO::PARAM_STR);
+$queryPassed->execute();
+$passedClients = $queryPassed->fetchColumn();
 ?>
 
 <!DOCTYPE HTML>
@@ -273,6 +292,18 @@ $pendingClients = $queryPending->fetchColumn();
                             </div>
                             <div class="stats-right" style="background-color:#aaaaaa;">
                                 <label><?php echo htmlentities($pendingClients); ?></label>
+                            </div>
+                            <div class="clearfix"></div>
+							</a>
+                        </div>
+                        <div class="col-md-3 col-sm-6 widget">
+							<a href = "deadline-passed.php">
+                            <div class="stats-left">
+                                <h5>Passed</h5>
+                                <h4>Deadline</h4>
+                            </div>
+                            <div class="stats-right" style="background-color:#fc3d39;">
+                                <label><?php echo htmlentities($passedClients); ?></label>
                             </div>
                             <div class="clearfix"></div>
 							</a>

@@ -149,14 +149,14 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
                             <li><a href="dashboard.php">Home</a></li>
-                            <li class="active">Manage Clients</li>
+                            <li class="active">Paid Clients</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Manage Clients</h3>
+                        <h3 class="inner-tittle two">Payment Recieved</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">
@@ -169,16 +169,17 @@ function updatePaymentStatus(ID, PaymentStatus) {
                             <div class="tables">
                                 <table class="table" border="1" id="client-table">
                                     <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th style="width: 10%;">Contact Name</th>
-                                            <th>Company Name</th>
-                                            <th>Phone Number</th>
+                                    <tr>
+                                            <th>Job</th>
+                                            <th >Client </th>
+                                            <th>Company</th>
+                                            <th>Financial Year</th>
+                                            <th>File</th>
+                                            <th>Task</th>
+                                            <th>Assigned</th>
+                                            <th>Deadline</th>
                                             <th>Status</th>
                                             <th>Payment Status</th>
-                                            <th>Added by</th>
-                                            <th>Assigned to</th>
-                                            <th>Setting</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -188,10 +189,15 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                             foreach ($clients as $client) {
                                         ?>
                                                 <tr class="active">
-                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
-                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
-                                                    <td><?php echo htmlentities($client->CompanyName); ?></td>
-                                                    <td><?php echo htmlentities($client->Cellphnumber); ?></td>
+                                                    <td><?php echo htmlentities($client->ID); ?></th>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo getAssignedEmployeeName($client->ID); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
+                                                    
                                                     <td>
                                                         <select name="status" onchange="updateStatus('<?php echo $client->ID; ?>', this.value)">
                                                             <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
@@ -205,15 +211,6 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                                         <option value="Paid" <?php if ($client->PaymentStatus == 'Paid') echo 'selected'; ?>>Paid</option>
                                                         <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
                                                     </select>
-                                                    </td>
-
-                                                    <td><?php echo htmlentities($client->ClientAddedBy); ?></td>
-
-                                                    <td><?php echo getAssignedEmployeeName($client->ID); ?></td>
-
-                                                    <td>
-                                                        <a href="edit-client-details.php?addid=<?php echo $client->ID; ?>">Edit</a> ||
-                                                        <a href="assign-employees.php?addid=<?php echo $client->ID; ?>">Assign </a>
                                                     </td>
                                                 </tr>
                                         <?php

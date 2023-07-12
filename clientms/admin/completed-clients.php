@@ -35,15 +35,15 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
             }
         }
     }
-    $sql = "SELECT * FROM tblclient WHERE PaymentStatus = 'Pending'";
+    $sql = "SELECT * FROM tblclient WHERE Status = 'Completed'";
 		$query = $dbh->prepare($sql);
 		$query->execute();
 		$clients = $query->fetchAll(PDO::FETCH_OBJ);
-	if (isset($_GET['search']) && !empty($_GET['search'])) {
+    if (isset($_GET['search']) && !empty($_GET['search'])) {
 		$search = $_GET['search'];
 	
 		// Fetch clients based on the search query
-		$sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
+		$sql = "SELECT * FROM tblclient WHERE ContactName OR CompanyName OR Tag LIKE :search";
 		$query = $dbh->prepare($sql);
 		$query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
 		$query->execute();
@@ -57,18 +57,15 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
 			// No clients found for the search query
 			$clients = [];
 		}
-	} else {
-		// Fetch all clients
-		
-	}
-	
+	}     
 }
 ?>
+
 
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Client Management System || Manage Client</title>
+    <title>Manage Clients</title>
     <link href="css/bootstrap.min.css" rel='stylesheet' type='text/css' />
     <link href="css/style.css" rel='stylesheet' type='text/css' />
     <link href="css/font-awesome.css" rel="stylesheet"> 
@@ -149,19 +146,19 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
                             <li><a href="dashboard.php">Home</a></li>
-                            <li class="active">Pending Clients</li>
+                            <li class="active">Completed Clients</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Payment Pending</h3>
+                        <h3 class="inner-tittle two">Completed Clients</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">
                                 <form method="GET" action="">
-                                    <input type="text" name="search" placeholder="Search clients...">
+                                    <input type="text" name="search" placeholder="Search clients..">
                                     <button type="submit"><i class = "lnr lnr-magnifier"></i></button>
                                 </form>
                             </div>
@@ -169,7 +166,7 @@ function updatePaymentStatus(ID, PaymentStatus) {
                             <div class="tables">
                                 <table class="table" border="1" id="client-table">
                                     <thead>
-                                    <tr>
+                                        <tr>
                                             <th>Job</th>
                                             <th >Client </th>
                                             <th>Company</th>
@@ -187,6 +184,7 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                         $cnt = 1;
                                         if (!empty($clients)) {
                                             foreach ($clients as $client) {
+                                                
                                         ?>
                                                 <tr class="active">
                                                     <td><?php echo htmlentities($client->ID); ?></th>
@@ -212,7 +210,14 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                                         <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
                                                     </select>
                                                     </td>
+
+                                                    
+                                                    
+
+                                                    
+                                                    
                                                 </tr>
+
                                         <?php
                                                 $cnt++;
                                             }

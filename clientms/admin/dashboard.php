@@ -25,7 +25,7 @@ if (strlen($_SESSION['clientmsaid']==0)) {
   $workInProcess = $data['workInProcess'];
 
   // Fetch work not done
-  $sql = "SELECT COUNT(ID) AS workNotDone FROM tblclient WHERE Status = 'Not Done'";
+  $sql = "SELECT COUNT(ID) AS workNotDone FROM tblclient WHERE Status = 'Not Started'";
   $query = $dbh->prepare($sql);
   $query->execute();
   $data = $query->fetch(PDO::FETCH_ASSOC);
@@ -52,8 +52,17 @@ if (strlen($_SESSION['clientmsaid']==0)) {
   $data = $query->fetch(PDO::FETCH_ASSOC);
   $paymentPending = $data['paymentPending'];
 
+  // Fetch overdue clients
+  $today = date('Y-m-d');
+  $sql = "SELECT COUNT(ID) AS overdueClients FROM tblclient WHERE deadline < :today";
+  $query = $dbh->prepare($sql);
+  $query->bindParam(':today', $today, PDO::PARAM_STR);
+  $query->execute();
+  $data = $query->fetch(PDO::FETCH_ASSOC);
+  $overdueClients = $data['overdueClients'];
 
-     ?>
+
+  ?>
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -151,8 +160,8 @@ if (strlen($_SESSION['clientmsaid']==0)) {
                                 <h5>Payment</h5>
                                 <h4>Done</h4>
                             </div>
-                            <div class="stats-right"style="background-color:#53d769;">
-                                <label><?php echo htmlentities($paymentDone); ?></label>
+                            <div class="stats-right">
+                                <label style="color:#53d769;"><?php echo htmlentities($paymentDone); ?></label>
                             </div>
                             <div class="clearfix"></div>
 							</a>
@@ -163,8 +172,8 @@ if (strlen($_SESSION['clientmsaid']==0)) {
                                 <h5>Payment</h5>
                                 <h4>Overdue	</h4>
                             </div>
-                            <div class="stats-right"style="background-color:#fc3d39;">
-                                <label><?php echo htmlentities($paymentOverdue); ?></label>
+                            <div class="stats-right">
+                                <label style="color:#fc3d39;"><?php echo htmlentities($paymentOverdue); ?></label>
                             </div>
                             <div class="clearfix"></div>
 							</a>
@@ -175,8 +184,20 @@ if (strlen($_SESSION['clientmsaid']==0)) {
                                 <h5>Payment</h5>
                                 <h4>Pending</h4>
                             </div>
-                            <div class="stats-right" style="background-color:#aaaaaa;">
-                                <label><?php echo htmlentities($paymentPending); ?></label>
+                            <div class="stats-right">
+                                <label style="color:#a9a9a9;"><?php echo htmlentities($paymentPending); ?></label>
+                            </div>
+                            <div class="clearfix"></div>
+							</a>
+                        </div>
+                        <div class="col-md-3 col-sm-6 widget">
+							<a href = "deadline-passed.php">
+                            <div class="stats-left">
+                                <h5>Passed</h5>
+                                <h4>Deadline</h4>
+                            </div>
+                            <div class="stats-right"style="background-color:#fc3d39;">
+                                <label ><?php echo htmlentities($overdueClients); ?></label>
                             </div>
                             <div class="clearfix"></div>
 							</a>

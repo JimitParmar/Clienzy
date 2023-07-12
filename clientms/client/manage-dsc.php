@@ -2,7 +2,7 @@
 session_start();
 include('includes/dbconnection.php');
 
-if (strlen($_SESSION['clientmsaid']) == 0) {
+if (strlen($_SESSION['clientmsuid']) == 0) {
     header('location:logout.php');
 } else {
     function getAssignedEmployeeName($clientId){
@@ -35,35 +35,69 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
             }
         }
     }
-    $sql = "SELECT * FROM tblclient WHERE PaymentStatus = 'Pending'";
-		$query = $dbh->prepare($sql);
-		$query->execute();
-		$clients = $query->fetchAll(PDO::FETCH_OBJ);
-	if (isset($_GET['search']) && !empty($_GET['search'])) {
-		$search = $_GET['search'];
-	
-		// Fetch clients based on the search query
-		$sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
-		$query = $dbh->prepare($sql);
-		$query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
-		$query->execute();
-		$results = $query->fetchAll(PDO::FETCH_OBJ);
-	
-		if ($query->rowCount() > 0) {
-			// Clients found, display the search results
-			$clients = $results;
 
-		} else {
-			// No clients found for the search query
-			$clients = [];
-		}
-	} else {
-		// Fetch all clients
-		
-	}
-	
+    $employeeId = $_SESSION['clientmsuid'];
+    $employeeName = $_SESSION['clientmsname'];
+
+    $sql = "SELECT tblclient.*, 
+        expiryDate1, 
+        expiryDate2, 
+        expiryDate3 
+        FROM tblclient 
+        INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+        INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+        WHERE tblassignments.EmployeeID = :employeeId
+
+        UNION
+
+        SELECT tblclient.*, 
+        expiryDate1, 
+        expiryDate2, 
+        expiryDate3 
+        FROM tblclient 
+        WHERE ClientAddedBy = :employeeName";
+
+
+
+    $query = $dbh->prepare($sql);
+    $query->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+    $query->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+    $query->execute();
+    $clients = $query->fetchAll(PDO::FETCH_OBJ);
+
+    if (isset($_GET['search']) && !empty($_GET['search'])) {
+        $search = $_GET['search'];
+
+        // Fetch clients based on the search query
+        $searchSql = "SELECT tblclient.* FROM tblclient 
+                    INNER JOIN tblassignments ON tblclient.ID = tblassignments.ID 
+                    INNER JOIN tblemployee ON tblassignments.EmployeeID = tblemployee.EmployeeID 
+                    WHERE tblassignments.EmployeeID = :employeeId
+                    AND (tblclient.ContactName LIKE :search OR tblclient.CompanyName LIKE :search OR tblclient.Tag LIKE :search)
+
+                    UNION
+
+                    SELECT * FROM tblclient WHERE ClientAddedBy = :employeeName
+                    AND (ContactName LIKE :search OR CompanyName LIKE :search OR Tag LIKE :search)";
+
+        $searchQuery = $dbh->prepare($searchSql);
+        $searchQuery->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+        $searchQuery->bindParam(':employeeName', $employeeName, PDO::PARAM_STR);
+        $searchQuery->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $searchQuery->execute();
+        $searchResults = $searchQuery->fetchAll(PDO::FETCH_OBJ);
+
+        if ($searchQuery->rowCount() > 0) {
+            // Clients found, display the search results
+            $clients = $searchResults;
+        } else {
+            // No clients found for the search query
+            $clients = [];
+        }
+    }
 }
 ?>
+
 
 <!DOCTYPE HTML>
 <html>
@@ -149,14 +183,14 @@ function updatePaymentStatus(ID, PaymentStatus) {
                     <div class="sub-heard-part">
                         <ol class="breadcrumb m-b-0">
                             <li><a href="dashboard.php">Home</a></li>
-                            <li class="active">Pending Clients</li>
+                            <li class="active">Manage DSC</li>
                         </ol>
                     </div>
                     <!--//sub-heard-part-->
                     <div class="graph-visual tables-main">
                         
                     
-                        <h3 class="inner-tittle two">Payment Pending</h3>
+                        <h3 class="inner-tittle two">Manage DSC</h3>
                         <div class="graph">
                         <div class="search-bar-container">
                             <div class="search-bar">
@@ -169,17 +203,13 @@ function updatePaymentStatus(ID, PaymentStatus) {
                             <div class="tables">
                                 <table class="table" border="1" id="client-table">
                                     <thead>
-                                    <tr>
-                                            <th>Job</th>
-                                            <th >Client </th>
-                                            <th>Company</th>
-                                            <th>Financial Year</th>
-                                            <th>File</th>
-                                            <th>Task</th>
-                                            <th>Assigned</th>
-                                            <th>Deadline</th>
-                                            <th>Status</th>
-                                            <th>Payment Status</th>
+                                        <tr>
+                                            <th>#</th>
+                                            <th style="width: 10%;">Client </th>
+                                            <th>IceGate</th>
+                                            <th>DGFT</th>
+                                            <th>Class3</th>
+                                            <th>Setting</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -189,28 +219,13 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                             foreach ($clients as $client) {
                                         ?>
                                                 <tr class="active">
-                                                    <td><?php echo htmlentities($client->ID); ?></th>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo getAssignedEmployeeName($client->ID); ?></td>
-                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
-                                                    
+                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
+                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate1); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate2); ?></td>
+                                                    <td><?php echo htmlentities($client->expiryDate3); ?></td>
                                                     <td>
-                                                        <select name="status" onchange="updateStatus('<?php echo $client->ID; ?>', this.value)">
-                                                            <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
-                                                            <option value="In Process" <?php if ($client->Status == 'In Process') echo 'selected'; ?>>In Process</option>
-                                                            <option value="Completed" <?php if ($client->Status == 'Completed') echo 'selected'; ?>>Completed</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                    <select name="payment_status" onchange="updatePaymentStatus('<?php echo $client->ID; ?>', this.value)">
-                                                        <option value="Pending" <?php if ($client->PaymentStatus == 'Pending') echo 'selected'; ?>>Pending</option>
-                                                        <option value="Paid" <?php if ($client->PaymentStatus == 'Paid') echo 'selected'; ?>>Paid</option>
-                                                        <option value="Overdue" <?php if ($client->PaymentStatus == 'Overdue') echo 'selected'; ?>>Overdue</option>
-                                                    </select>
+                                                        <a href="edit-dsc-details.php?viewid=<?php echo $client->ID; ?>">Edit</a>
                                                     </td>
                                                 </tr>
                                         <?php

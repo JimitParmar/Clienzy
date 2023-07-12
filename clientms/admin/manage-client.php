@@ -35,36 +35,35 @@ if (strlen($_SESSION['clientmsaid']) == 0) {
             }
         }
     }
-    $sql = "SELECT c.ID, c.ContactName, c.CompanyName, c.Cellphnumber, c.Status, c.PaymentStatus, e.EmployeeName, c.ClientAddedBy
+    $sql = "SELECT c.ID, c.ContactName, c.CompanyName, c.deadline, c.Status, c.PaymentStatus, e.EmployeeName, c.Tag, c.file, c.financialyear
 				FROM tblclient c
 				LEFT JOIN tblclient_employee ce ON c.ClientAddedBy = ce.EmployeeID
 				LEFT JOIN tblemployee e ON ce.EmployeeID = e.EmployeeID";
 		$query = $dbh->prepare($sql);
 		$query->execute();
+        
 		$clients = $query->fetchAll(PDO::FETCH_OBJ);
-	if (isset($_GET['search']) && !empty($_GET['search'])) {
-		$search = $_GET['search'];
 	
-		// Fetch clients based on the search query
-		$sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search";
-		$query = $dbh->prepare($sql);
-		$query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
-		$query->execute();
-		$results = $query->fetchAll(PDO::FETCH_OBJ);
-	
-		if ($query->rowCount() > 0) {
-			// Clients found, display the search results
-			$clients = $results;
-
-		} else {
-			// No clients found for the search query
-			$clients = [];
-		}
-	} else {
-		// Fetch all clients
-		
-	}
-	
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $search = $_GET['search'];
+        
+            // Fetch clients based on the search query
+    $sql = "SELECT * FROM tblclient WHERE ContactName LIKE :search OR CompanyName LIKE :search OR Tag LIKE :search OR ClientAddedBy LIKE :search";
+    $query = $dbh->prepare($sql);
+    $query->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+    $query->execute();
+    $results = $query->fetchAll(PDO::FETCH_OBJ);
+        
+            // Check if any clients are found
+            if ($query->rowCount() > 0) {
+                // Clients found, display the search results
+                $clients = $results;
+            } else {
+                // No clients found for the search query
+                $clients = [];
+            }
+	}     
+    
 }
 ?>
 
@@ -164,7 +163,7 @@ function updatePaymentStatus(ID, PaymentStatus) {
                         <div class="search-bar-container">
                             <div class="search-bar">
                                 <form method="GET" action="">
-                                    <input type="text" name="search" placeholder="Search clients...">
+                                    <input type="text" name="search" placeholder="Search clients..">
                                     <button type="submit"><i class = "lnr lnr-magnifier"></i></button>
                                 </form>
                             </div>
@@ -173,15 +172,16 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                 <table class="table" border="1" id="client-table">
                                     <thead>
                                         <tr>
-                                            <th>#</th>
-                                            <th style="width: 10%;">Contact Name</th>
-                                            <th>Company Name</th>
-                                            <th>Phone Number</th>
+                                            <th>Job</th>
+                                            <th >Client </th>
+                                            <th>Company</th>
+                                            <th>Financial Year</th>
+                                            <th>File</th>
+                                            <th>Task</th>
+                                            <th>Assigned</th>
+                                            <th>Deadline</th>
                                             <th>Status</th>
                                             <th>Payment Status</th>
-                                            <th>Added by</th>
-                                            <th>Assigned to</th>
-                                            <th>Setting</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -189,12 +189,18 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                         $cnt = 1;
                                         if (!empty($clients)) {
                                             foreach ($clients as $client) {
+                                                
                                         ?>
                                                 <tr class="active">
-                                                    <th scope="row"><?php echo htmlentities($cnt); ?></th>
-                                                    <td><?php echo htmlentities($client->ContactName); ?></td>
-                                                    <td><?php echo htmlentities($client->CompanyName); ?></td>
-                                                    <td><?php echo htmlentities($client->Cellphnumber); ?></td>
+                                                    <td><?php echo htmlentities($client->ID); ?></th>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->ContactName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->CompanyName); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->financialyear); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->file); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->Tag); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo getAssignedEmployeeName($client->ID); ?></td>
+                                                    <td onclick="window.location.href='edit-client-details.php?addid=<?php echo $client->ID; ?>'"><?php echo htmlentities($client->deadline); ?></td>
+                                                    
                                                     <td>
                                                         <select name="status" onchange="updateStatus('<?php echo $client->ID; ?>', this.value)">
                                                             <option value="Not Started" <?php if ($client->Status == 'Not Started') echo 'selected'; ?>>Not Started</option>
@@ -210,14 +216,13 @@ function updatePaymentStatus(ID, PaymentStatus) {
                                                     </select>
                                                     </td>
 
-                                                    <td><?php echo htmlentities($client->ClientAddedBy); ?></td>
-                                                    <td><?php echo getAssignedEmployeeName($client->ID); ?></td>
+                                                    
+                                                    
 
-                                                    <td>
-                                                        <a href="edit-client-details.php?addid=<?php echo $client->ID; ?>">Edit</a> ||
-                                                        <a href="assign-employees.php?addid=<?php echo $client->ID; ?>">Assign </a>
-                                                    </td>
+                                                    
+                                                    
                                                 </tr>
+
                                         <?php
                                                 $cnt++;
                                             }
